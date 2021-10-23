@@ -1,5 +1,5 @@
 const DATA_CACHE_NAME = 'data-cache-v1';
-const CACHE_NAME = 'statick-cache-v2';
+const CACHE_NAME = 'static-cache-v2';
 const FILES_TO_CACHE = [
     "/",
     "/icons/icon-192x192.png",
@@ -13,9 +13,28 @@ const FILES_TO_CACHE = [
 self.addEventListener('install', (event) =>{
     event.waitUntil(
         caches.open(CACHE_NAME)
+            // go into cache, name each individually
             .then(cache=>{
-                console.log('Files cached');
                 return cache.addAll(FILES_TO_CACHE);
             })
     )
-})
+    self.skipWaiting();
+});
+
+// Delete previous cache data
+self.addEventListener('activate', (event) =>{
+    event.waitUntil(
+        caches.keys()
+            .then(keyList =>{
+                return Promise.all(
+                    keyList.map(key =>{
+                        if(key !== CACHE_NAME && key !== DATA_CACHE_NAME){
+                            console.log('Removing old data: ', key);
+                            return(caches.delete(key));
+                        }
+                    })
+                )
+            })
+    );
+    self.clients.claim();
+});
