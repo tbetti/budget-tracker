@@ -1,3 +1,14 @@
+// Register service-worker.js
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js")
+    .then(reg =>{
+      console.log("Service worker registerd: ", reg);
+    });
+  });
+}
+
+// Add transactions and set up api routes
 let transactions = [];
 let myChart;
 
