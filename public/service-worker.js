@@ -17,8 +17,8 @@ self.addEventListener('install', (event) =>{
             .then(cache=>{
                 return cache.addAll(FILES_TO_CACHE);
             })
-    )
-    self.skipWaiting();
+            .then(self.skipWaiting())
+    );
 });
 
 // Delete previous cache data
@@ -41,6 +41,7 @@ self.addEventListener('activate', (event) =>{
 
 // Handle API calls and store in cache
 self.addEventListener('fetch', (event)=>{
+    // Check to see if request is api
     if(event.request.url.includes("/api/")){
         event.respondWith(
             caches.open(DATA_CACHE_NAME)
@@ -48,6 +49,7 @@ self.addEventListener('fetch', (event)=>{
                     console.log('API request: ', event.request);
                     return fetch(event.request)
                         .then(response=>{
+                            // if response is ok...
                             if(response.status===200){
                                 cache.put(event.request.url, response.clone());
                             }
@@ -66,9 +68,16 @@ self.addEventListener('fetch', (event)=>{
     }
     // Serve static files from cache and allow offline access
     event.respondWith(
-        caches.match(event.request)
-            .then(response =>{
-                return response || fetch(event.request);
-            }
-    ));
+        fetch(event.request)
+            .catch(()=>{
+                return caches.match(event.request)
+                    .then(response => {
+                        if (response) {
+                            return response;
+                        } else if (event.request.headers.get("accept").includes("text/html")) {
+                            return caches.match("/");
+                        }
+                    })
+            })
+    );
 });
